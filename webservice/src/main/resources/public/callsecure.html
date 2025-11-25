@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random with JWT</title>
+</head>
+<body>
+  <h1>Get Random Number (JWT protected)</h1>
+
+  <label>
+    JWT token:
+    <input id="tokenInput" type="text" size="80" value="YOUR_JWT_TOKEN_HERE">
+  </label>
+  <br><br>
+
+  <button id="callButton">Call /securerandom</button>
+
+  <h2>Result:</h2>
+  <pre id="result"></pre>
+
+  <script>
+    document.getElementById('callButton').addEventListener('click', async () => {
+      const token = document.getElementById('tokenInput').value.trim();
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = 'Calling /securerandom...';
+
+      try {
+        const response = await fetch('/securerandom', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/json'
+          }
+        });
+
+        const text = await response.text();
+        resultEl.textContent =
+          'Status: ' + response.status + ' ' + response.statusText + '\n\n' +
+          text;
+      } catch (err) {
+        resultEl.textContent = 'Error: ' + err;
+      }
+    });
+  </script>
+</body>
+</html>
