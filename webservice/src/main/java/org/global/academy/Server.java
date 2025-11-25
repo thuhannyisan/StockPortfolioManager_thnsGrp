@@ -105,9 +105,49 @@ public class Server {
 
         get("/applestock", (req, res) -> {
             res.type("application/json");
+            // Try to fetch a live price for AAPL using AGson; if it fails, return the last known price
+            try {
+                Double live = AGson.fetchPrice("AAPL");
+                if (live != null) {
+                    appleStock.setCurrentPrice(live);
+                }
+            } catch (Exception e) {
+                System.out.println("Could not fetch live AAPL price: " + e.getMessage());
+            }
             return gson.toJson(appleStock);
         });
+
+        // Generic stock endpoint: /stock?symbol=AAPL
+        get("/stock", (req, res) -> {
+            res.type("application/json");
+            String sym = req.queryParams("symbol");
+            if (sym == null || sym.trim().isEmpty()) {
+                sym = "AAPL";
+            }
+            String up = sym.trim().toUpperCase();
+            // Simple company name mapping for a few tickers
+            String company = up;
+            String exchange = "";
+            switch (up) {
+                case "AAPL": company = "Apple"; exchange = "NASDAQ"; break;
+                case "MSFT": company = "Microsoft"; exchange = "NASDAQ"; break;
+                case "GOOGL": company = "Alphabet"; exchange = "NASDAQ"; break;
+                case "AMZN": company = "Amazon"; exchange = "NASDAQ"; break;
+                case "TSLA": company = "Tesla"; exchange = "NASDAQ"; break;
+                default: company = up; exchange = "N/A"; break;
+            }
+            Stock s = new Stock(company, up, exchange, 0.0);
+            try {
+                Double live = AGson.fetchPrice(up);
+                if (live != null) s.setCurrentPrice(live);
+            } catch (Exception e) {
+                System.out.println("Error fetching price for " + up + ": " + e.getMessage());
+            }
+            return gson.toJson(s);
+        });
     }
+    
+    
     
     static class LoginRequest {
         String username;

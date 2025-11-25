@@ -49,7 +49,8 @@
             const data = JSON.parse(text);
             localStorage.setItem('username', data.username);
             localStorage.setItem('token', data.token);
-            window.location.href = 'welcome.html';
+            // Redirect to the dashboard UI after successful login
+            window.location.href = 'dashboard.html';
           } catch (e) {
             output.textContent += '\nError parsing response.';
           }
