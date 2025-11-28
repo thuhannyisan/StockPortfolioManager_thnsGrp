@@ -1,0 +1,9 @@
+org\global\academy\Server$LoginRequest.class
+org\global\academy\Server$RandomResponse.class
+org\global\academy\Flashcard.class
+org\global\academy\Stock.class
+org\global\academy\Server$LoginResponse.class
+org\global\academy\Server.class
+org\global\academy\JwtUtil.class
+org\global\academy\AGson.class
+org\global\academy\Server$ErrorResponse.class

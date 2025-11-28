@@ -35,6 +35,14 @@
 
 <build>
     <plugins>
+    <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.2</version>
+        <configuration>
+            <mainClass>org.global.academy.Server</mainClass>
+        </configuration>
+    </plugin>
         <!-- Compiler plugin to use Java 21 -->
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
