@@ -3,18 +3,255 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Academy Demo</title>
+  <title>Stock Portfolio Manager</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light">
-  <main class="d-flex flex-column align-items-center justify-content-center min-vh-100">
-    <div class="text-center">
-      <img src="global_a.jpg" alt="Global Academy Logo" class="img-fluid mb-4" style="max-width: 300px;">
-      <h1 class="display-4 fw-bold mb-4">Welcome to Global Academy</h1>
-      <p class="lead mb-4">Object Oriented Programming</p>
-      <a href="login.html" class="btn btn-primary btn-lg">Log In</a>
+<body>
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    nav {
+      background: rgba(0, 0, 0, 0.1) !important;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .hero-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .hero-content {
+      max-width: 600px;
+      animation: fadeInDown 0.8s ease;
+    }
+    
+    .hero-content h1 {
+      color: white;
+      font-weight: 800;
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero-content p {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: clamp(1rem, 4vw, 1.25rem);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    
+    .logo-container {
+      margin-bottom: 2rem;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+    
+    .logo-container img {
+      max-width: 280px;
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+    }
+    
+    .cta-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      animation: fadeInUp 0.8s ease 0.4s both;
+    }
+    
+    .btn-primary-custom {
+      background: white;
+      color: #667eea;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 0.75rem 2.5rem;
+      border-radius: 50px;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      color: #667eea;
+    }
+    
+    .btn-outline-custom {
+      background: transparent;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 0.75rem 2.5rem;
+      border-radius: 50px;
+      border: 2px solid white;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-outline-custom:hover {
+      background: white;
+      color: #667eea;
+      transform: translateY(-2px);
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    .feature-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 1.5rem;
+      border-radius: 12px;
+      color: white;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .feature-item h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .feature-item p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+      margin: 0;
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    footer {
+      background: rgba(0, 0, 0, 0.2);
+      color: rgba(255, 255, 255, 0.9);
+      padding: 2rem 1rem;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: auto;
+    }
+    
+    @media (max-width: 768px) {
+      .hero-content h1 {
+        margin-bottom: 0.5rem;
+      }
+      
+      .logo-container img {
+        max-width: 200px;
+      }
+      
+      .cta-buttons {
+        gap: 0.75rem;
+      }
+      
+      .btn-primary-custom,
+      .btn-outline-custom {
+        font-size: 1rem;
+        padding: 0.65rem 2rem;
+      }
+      
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="index.html" style="color: white; font-size: 1.5rem;">
+        📈 StockPortfolio
+      </a>
+    </div>
+  </nav>
+
+  <main class="hero-section flex-grow-1">
+    <div class="hero-content">
+      <div class="logo-container">
+        <img src="global_a.jpg" alt="Global Academy Logo">
+      </div>
+      
+      <h1>Stock Portfolio Manager</h1>
+      <p>Track, manage, and grow your investment portfolio with ease. Real-time stock data and intelligent portfolio insights.</p>
+      
+      <div class="cta-buttons">
+        <a href="login.html" class="btn-primary-custom">Get Started</a>
+        <!-- <a href="dashboard.html" class="btn-outline-custom" onclick="if(!localStorage.getItem('token')) { event.preventDefault(); alert('Please login first'); }">Dashboard</a> -->
+      </div>
+      
+      <div class="features">
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <h3>Real-Time Data</h3>
+          <p>Get live stock prices and market insights</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💼</div>
+          <h3>Portfolio Tracking</h3>
+          <p>Manage and monitor all your holdings</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📈</div>
+          <h3>Smart Analytics</h3>
+          <p>Track performance and growth trends</p>
+        </div>
+      </div>
     </div>
   </main>
+
+  <footer>
+    <small style="opacity: 0.8;">© 2025 Stock Portfolio Manager by THNS GP • OOP Group</small>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
