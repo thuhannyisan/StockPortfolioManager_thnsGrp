@@ -17,7 +17,10 @@ function autoDismissAlerts() {
   });
 
   observer.observe(document.getElementById('stockMsg'), { childList: true });
-  observer.observe(document.getElementById('protectedResult'), { childList: true });
+  const portfolioMsgEl = document.getElementById('portfolioMsg');
+  if (portfolioMsgEl) {
+    observer.observe(portfolioMsgEl, { childList: true });
+  }
 }
 
 // Add keyboard shortcuts
@@ -29,48 +32,63 @@ function addKeyboardShortcuts() {
       document.getElementById('refreshStock').click();
     }
     
-    // Ctrl/Cmd + P: Call protected API
+    // Ctrl/Cmd + P: Call protected API (only if button present)
     if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
       e.preventDefault();
-      document.getElementById('protectedCall').click();
+      const pc = document.getElementById('protectedCall');
+      if (pc) pc.click();
     }
     
-    // Escape: Clear custom symbol input
+    // Escape: blur any focused control
     if (e.key === 'Escape') {
-      document.getElementById('customSymbol').value = '';
-      document.getElementById('customSymbol').blur();
-    }
-    
-    // Enter in custom symbol input: Load stock
-    if (e.key === 'Enter' && document.activeElement.id === 'customSymbol') {
-      e.preventDefault();
-      document.getElementById('loadSymbol').click();
+      try { document.activeElement.blur(); } catch (e) { /* ignore */ }
     }
   });
 }
 
+// Ensure a symbol exists in the dropdown and select it
+function setSelectedSymbol(symbol) {
+  if (!symbol) return;
+  const sel = document.getElementById('symbolSelect');
+  if (!sel) return;
+  const up = symbol.trim().toUpperCase();
+  // If option exists, select it
+  let opt = Array.from(sel.options).find(o => o.value.toUpperCase() === up || o.text.toUpperCase().startsWith(up + ' '));
+  if (!opt) {
+    opt = document.createElement('option');
+    opt.value = up;
+    opt.text = up + ' — Custom';
+    sel.prepend(opt);
+  }
+  sel.value = opt.value;
+}
+
 // Add loading spinner to buttons
 function enhanceButtons() {
-  const originalRefreshClick = document.getElementById('refreshStock').onclick;
-  const originalProtectedClick = document.getElementById('protectedCall').onclick;
+  const refreshBtn = document.getElementById('refreshStock');
+  const addBtn = document.getElementById('addHolding');
   
-  document.getElementById('refreshStock').addEventListener('click', function() {
-    this.innerHTML = '<span class="spinner"></span> Loading...';
-    this.disabled = true;
-    setTimeout(() => {
-      this.innerHTML = 'Refresh';
-      this.disabled = false;
-    }, 1000);
-  });
-  
-  document.getElementById('protectedCall').addEventListener('click', function() {
-    this.innerHTML = '<span class="spinner"></span> Calling...';
-    this.disabled = true;
-    setTimeout(() => {
-      this.innerHTML = 'Call Protected API';
-      this.disabled = false;
-    }, 1000);
-  });
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function() {
+      this.innerHTML = '<span class="spinner"></span> Loading...';
+      this.disabled = true;
+      setTimeout(() => {
+        this.innerHTML = 'Refresh';
+        this.disabled = false;
+      }, 1000);
+    });
+  }
+
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      this.innerHTML = '<span class="spinner"></span> Adding...';
+      this.disabled = true;
+      setTimeout(() => {
+        this.innerHTML = 'Add';
+        this.disabled = false;
+      }, 800);
+    });
+  }
 }
 
 // Add spinner CSS dynamically
@@ -211,7 +229,7 @@ function initRecentSearches() {
       chip.className = 'recent-search-chip';
       chip.textContent = symbol;
       chip.onclick = () => {
-        document.getElementById('customSymbol').value = symbol;
+        setSelectedSymbol(symbol);
         document.getElementById('loadSymbol').click();
       };
       container.appendChild(chip);
@@ -340,7 +358,7 @@ function createFavoritesSection() {
       chip.className = 'recent-search-chip';
       chip.innerHTML = `⭐ ${symbol}`;
       chip.onclick = () => {
-        document.getElementById('customSymbol').value = symbol;
+        setSelectedSymbol(symbol);
         document.getElementById('loadSymbol').click();
       };
       favContainer.appendChild(chip);
@@ -348,6 +366,166 @@ function createFavoritesSection() {
     
     favSection.appendChild(favContainer);
     card.querySelector('.mb-3').after(favSection);
+  }
+}
+
+// Portfolio (owned stocks) management
+function getUserHoldings() {
+  const username = localStorage.getItem('username') || 'guest';
+  const all = JSON.parse(localStorage.getItem('userHoldings') || '{}');
+  return all[username] || [];
+}
+
+function saveUserHoldings(holdings) {
+  const username = localStorage.getItem('username') || 'guest';
+  const all = JSON.parse(localStorage.getItem('userHoldings') || '{}');
+  all[username] = holdings;
+  localStorage.setItem('userHoldings', JSON.stringify(all));
+}
+
+function renderHoldings() {
+  const tbody = document.querySelector('#holdingsTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const holdings = getUserHoldings();
+  if (holdings.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="8"><small class="text-muted">No holdings yet.</small></td>';
+    tbody.appendChild(tr);
+  }
+  holdings.forEach((h, idx) => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-symbol', (h.symbol || '').toUpperCase());
+    tr.innerHTML = `
+      <td><button class="btn btn-sm btn-outline-primary load-holding" data-idx="${idx}">▶</button></td>
+      <td>${h.companyName || '-'}</td>
+      <td>${h.symbol}</td>
+      <td>${h.exchange || '-'}</td>
+      <td>$${(h.currentPrice!=null? parseFloat(h.currentPrice).toFixed(2): '-')}</td>
+      <td>$${(h.boughtPrice!=null? parseFloat(h.boughtPrice).toFixed(2): '-')}</td>
+      <td>${h.owner || localStorage.getItem('username') || 'guest'}</td>
+      <td><button class="btn btn-sm btn-danger delete-holding" data-idx="${idx}">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Attach handlers
+  document.querySelectorAll('.delete-holding').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.getAttribute('data-idx'));
+      const holdings = getUserHoldings();
+      holdings.splice(idx, 1);
+      saveUserHoldings(holdings);
+      renderHoldings();
+      showToast('Holding removed', 'info');
+    };
+  });
+
+  document.querySelectorAll('.load-holding').forEach(btn => {
+    btn.onclick = async () => {
+      const idx = parseInt(btn.getAttribute('data-idx'));
+      const holdings = getUserHoldings();
+      const symbol = holdings[idx] && holdings[idx].symbol;
+      if (symbol) {
+        setSelectedSymbol(symbol);
+        document.getElementById('loadSymbol').click();
+      }
+    };
+  });
+
+  // After rendering, update ownership status for current selected symbol
+  const currentSymbol = (document.getElementById('symbolSelect')?.value || document.getElementById('symbol').textContent || '').trim().toUpperCase();
+  if (currentSymbol) updateOwnershipStatus(currentSymbol);
+}
+
+async function addHoldingHandler() {
+  const symbolIn = document.getElementById('holdSymbol');
+  const priceIn = document.getElementById('holdPrice');
+  const msg = document.getElementById('portfolioMsg');
+  const symbol = (symbolIn && symbolIn.value || '').trim().toUpperCase();
+  const bought = parseFloat(priceIn && priceIn.value) || null;
+  if (!symbol) {
+    if (msg) msg.innerHTML = '<div class="alert alert-warning py-2">Enter a symbol.</div>';
+    return;
+  }
+
+  try {
+    if (msg) msg.innerHTML = 'Looking up symbol...';
+    const res = await fetch('/stock?symbol=' + encodeURIComponent(symbol));
+    if (!res.ok) throw new Error('Failed to fetch symbol');
+    const data = await res.json();
+    const holding = {
+      companyName: data.companyName || data.company || '-',
+      symbol: data.symbol || symbol,
+      exchange: data.stockExchange || data.exchange || '-',
+      currentPrice: data.currentPrice != null ? data.currentPrice : (data.price || null),
+      boughtPrice: bought,
+      owner: localStorage.getItem('username') || 'guest',
+      addedAt: new Date().toISOString()
+    };
+
+    const holdings = getUserHoldings();
+    holdings.unshift(holding);
+    saveUserHoldings(holdings);
+    renderHoldings();
+    if (msg) msg.innerHTML = '<div class="alert alert-success py-2">Holding added</div>';
+    symbolIn.value = '';
+    priceIn.value = '';
+  } catch (err) {
+    if (msg) msg.innerHTML = '<div class="alert alert-danger py-2">' + err.message + '</div>';
+  }
+}
+
+function clearOwnershipHighlights() {
+  document.querySelectorAll('#holdingsTable tbody tr').forEach(tr => tr.classList.remove('table-primary'));
+}
+
+function updateOwnershipStatus(symbol) {
+  const el = document.getElementById('ownershipStatus');
+  if (!el) return;
+  const sym = (symbol || '').trim().toUpperCase();
+  if (!sym) {
+    el.innerHTML = '<div class="alert alert-secondary py-2 mb-0">Select a symbol on the left to see ownership details.</div>';
+    clearOwnershipHighlights();
+    return;
+  }
+
+  const holdings = getUserHoldings();
+  const matches = holdings.filter(h => (h.symbol || '').toUpperCase() === sym);
+  clearOwnershipHighlights();
+  // highlight matching rows
+  if (matches.length > 0) {
+    // highlight rows in table
+    document.querySelectorAll('#holdingsTable tbody tr[data-symbol]').forEach(tr => {
+      const rowSym = tr.getAttribute('data-symbol');
+      if (rowSym === sym) tr.classList.add('table-primary');
+    });
+
+    const h = matches[0];
+    el.innerHTML = `
+      <div class="alert alert-success py-2 mb-0">
+        <div><strong>Owned:</strong> Yes — ${h.companyName || '-'} (${h.symbol})</div>
+        <div class="small text-muted">Exchange: ${h.exchange || '-'}</div>
+        <div class="mt-2">Current: <strong>$${(h.currentPrice!=null? parseFloat(h.currentPrice).toFixed(2): '-')}</strong>
+          &nbsp; Bought: <strong>$${(h.boughtPrice!=null? parseFloat(h.boughtPrice).toFixed(2): '-')}</strong>
+        </div>
+        <div class="mt-1 small">Owner: ${h.owner || localStorage.getItem('username') || 'guest'}</div>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="alert alert-warning py-2 mb-0">
+        <div><strong>Owned:</strong> No — you don't have ${sym} in your portfolio.</div>
+        <div class="mt-2"><button id="ownershipAddBtn" class="btn btn-sm btn-outline-success">Add to portfolio</button></div>
+      </div>
+    `;
+    const btn = document.getElementById('ownershipAddBtn');
+    if (btn) btn.addEventListener('click', () => {
+      const si = document.getElementById('holdSymbol');
+      if (si) si.value = sym;
+      const pi = document.getElementById('holdPrice');
+      if (pi) pi.focus();
+    });
   }
 }
 
@@ -398,6 +576,11 @@ function enhanceStockLoading() {
     // Show toast notification
     const companyName = document.getElementById('companyName').textContent;
     showToast(`Loaded ${companyName} (${symbol})`, 'success');
+    try {
+      updateOwnershipStatus(symbol);
+    } catch (e) {
+      console.warn('updateOwnershipStatus failed', e);
+    }
   };
 }
 
@@ -415,9 +598,7 @@ function addHelpTooltip() {
     const shortcuts = `
       Keyboard Shortcuts:
       • Ctrl/Cmd + R: Refresh stock
-      • Ctrl/Cmd + P: Call protected API
-      • Enter: Load symbol (when in input)
-      • Escape: Clear input
+      • Escape: Blur focused control
     `;
     alert(shortcuts);
   };
@@ -437,6 +618,10 @@ function initEnhancements() {
   createFavoritesSection();
   addFavoriteButton();
   enhanceStockLoading();
+  // Render portfolio and wire add button
+  renderHoldings();
+  const addBtn = document.getElementById('addHolding');
+  if (addBtn) addBtn.addEventListener('click', addHoldingHandler);
   addHelpTooltip();
   
   console.log('✨ Dashboard enhancements loaded!');

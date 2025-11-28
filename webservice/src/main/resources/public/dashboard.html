@@ -37,8 +37,7 @@
                 <option value="AMZN">AMZN — Amazon</option>
                 <option value="TSLA">TSLA — Tesla</option>
               </select>
-              <input id="customSymbol" class="form-control" placeholder="Or type symbol" />
-              <button id="loadSymbol" class="btn btn-secondary">Load</button>
+              <button id="loadSymbol" class="btn btn-secondary" title="Load selected symbol">🔁</button>
             </div>
           </div>
           <div class="mt-3">
@@ -49,7 +48,6 @@
           </div>
           <div class="mt-4 d-flex gap-2">
             <button id="refreshStock" class="btn btn-primary">Refresh</button>
-            <button id="protectedCall" class="btn btn-outline-primary">Call Protected API</button>
           </div>
           <div id="stockMsg" class="mt-3"></div>
         </div>
@@ -57,9 +55,48 @@
 
       <div class="col-lg-6 mb-4">
         <div class="card shadow-sm p-4">
-          <!-- <h4>Protected Endpoint Result</h4>
-          <p class="text-muted">This calls <code>/securerandom</code> using your saved token.</p> -->
-          <div id="protectedResult"></div>
+          <h4>My Portfolio</h4>
+          <p class="text-muted">Add and manage your owned stocks (stored locally).</p>
+
+          <div id="ownershipStatus" class="mb-3">
+            <div class="alert alert-secondary py-2 mb-0">Select a symbol on the left to see ownership details.</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <input id="holdSymbol" class="form-control" placeholder="Symbol (e.g. AAPL)" />
+              </div>
+              <div class="col-sm-4">
+                <input id="holdPrice" class="form-control" placeholder="Price when bought" type="number" step="0.01" />
+              </div>
+              <div class="col-sm-2 d-grid">
+                <button id="addHolding" class="btn btn-success">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="portfolioMsg"></div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle" id="holdingsTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Company</th>
+                  <th>Symbol</th>
+                  <th>Exchange</th>
+                  <th>Current</th>
+                  <th>Bought</th>
+                  <th>Owner</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- holdings rendered here -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -92,30 +129,16 @@
     }
 
     document.getElementById('refreshStock').addEventListener('click', () => {
-      const sym = document.getElementById('customSymbol').value.trim() || document.getElementById('symbolSelect').value;
+      const sym = document.getElementById('symbolSelect').value;
       loadStock(sym);
     });
 
     document.getElementById('loadSymbol').addEventListener('click', () => {
-      const sym = document.getElementById('customSymbol').value.trim() || document.getElementById('symbolSelect').value;
+      const sym = document.getElementById('symbolSelect').value;
       loadStock(sym);
     });
 
-    document.getElementById('protectedCall').addEventListener('click', async () => {
-      const out = document.getElementById('protectedResult');
-      out.innerHTML = 'Calling protected endpoint...';
-      try {
-        const res = await fetch('/securerandom', { headers: { 'Authorization': 'Bearer ' + token } });
-        if (res.status === 401) {
-          out.innerHTML = '<div class="alert alert-warning">Unauthorized. Please login again.</div>';
-          return;
-        }
-        const data = await res.json();
-        out.innerHTML = '<div class="alert alert-success">Value: <strong>' + (data.value ?? data.number ?? JSON.stringify(data)) + '</strong></div>';
-      } catch (err) {
-        out.innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
-      }
-    });
+    // Protected endpoint removed from UI; no-op kept for compatibility
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
       localStorage.removeItem('username');
